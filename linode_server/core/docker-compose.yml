@@ -1,0 +1,89 @@
+volumes:
+  nginx-data:
+  nginx-ssl:
+  nginx-db:
+  postgres-db:
+  grafana-data:
+
+networks:
+  frontend:
+    external: true
+  backend:
+    external: true
+
+services:
+  nginx:
+    container_name: nginx
+    hostname: nginx
+    image: jc21/nginx-proxy-manager:latest
+    restart: always
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+    environment:
+      DB_MYSQL_HOST: nginx-db
+      DB_MYSQL_PORT: 3306
+      DB_MYSQL_USER: nginx
+      DB_MYSQL_PASSWORD: replace-with-secure-password
+      DB_MYSQL_NAME: nginx
+    volumes:
+      - nginx-data:/data
+      - nginx-ssl:/etc/letsencrypt
+    networks:
+      - frontend
+      - backend
+
+  nginx-db:
+    container_name: nginx_db
+    hostname: nginx_db
+    image: jc21/mariadb-aria:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: replace-with-secure-password
+      MYSQL_DATABASE: nginx
+      MYSQL_USER: nginx
+      MYSQL_PASSWORD: replace-with-secure-password
+    volumes:
+      - nginx-db:/var/lib/mysql
+    networks:
+      - backend
+
+  postgres-db:
+    container_name: postgres
+    hostname: postgres
+    image: postgres:alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    networks:
+      - backend
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+
+  pgadmin:
+    container_name: pgadmin
+    hostname: pgadmin
+    image: dpage/pgadmin4:snapshot
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "krlsedu@gmail.com"
+      PGADMIN_DEFAULT_PASSWORD: "admin"
+      PGADMIN_LISTEN_PORT: 82
+    depends_on:
+      - postgres-db
+    networks:
+      - backend
+
+  grafana:
+    image: grafana/grafana:main-ubuntu
+    container_name: grafana
+    hostname: grafana
+    networks:
+      - backend
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_SERVER_HTTP_PORT=3000
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped

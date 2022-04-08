@@ -1,0 +1,16 @@
+version: '3'
+
+networks:
+  backend:
+    external: true
+
+services:
+  app:
+    container_name: notify_sync
+    hostname: notify_sync
+    image: krlsedu/notify-sync-server
+    restart: always
+    networks:
+      - backend
+    ports:
+      - "8088:8890"

@@ -1,0 +1,19 @@
+version: '3'
+
+networks:
+  backend:
+    external: true
+
+services:
+  app:
+    container_name: monitor_consumo
+    hostname: monitor_consumo
+    image: krlsedu/monitor-consumo
+    restart: always
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/monitor_consumo
+    networks:
+      - backend
+    ports:
+      - "8080:8080"
+    entrypoint: "java -Djava.security.egd=file:/dev/./urandom -jar app.jar"
