@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  pubsubemulator:
+    container_name: pubsubemulator
+    hostname: pubsubemulator
+    image: pubsubemulator
+    ports:
+      - "8085:8085"

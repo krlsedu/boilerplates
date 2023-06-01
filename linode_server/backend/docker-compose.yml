@@ -6,16 +6,14 @@ networks:
 
 services:
   csctracker:
-    container_name: csctracker
-    hostname: csctracker
-    image: krlsedu/timetracker
+    container_name: backend
+    hostname: backend
+    image: krlsedu/csctracker-backend
     restart: always
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/postgres
-    ports:
-      - "8090:8080"
     networks:
       - backend
     entrypoint: "java -Djava.security.egd=file:/dev/./urandom -jar app.jar"
     volumes:
-      - /root/.timeTracker:/etc/timeTracker/.timeTracker
+      - /root/.cscTracker:/etc/cscTracker/.cscTracker

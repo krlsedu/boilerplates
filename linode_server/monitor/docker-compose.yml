@@ -1,0 +1,85 @@
+version: '3.8'
+
+volumes:
+  prometheus-data:
+    driver: local
+
+networks:
+  backend:
+    external: true
+
+services:
+  cadvisor:
+    image: spcodes/cadvisor
+    container_name: cadvisor
+    hostname: cadvisor
+    privileged: true
+    expose:
+      - 8080
+    #    ports:
+    #      - "8180:8080"
+    command:
+      - "--housekeeping_interval=30s"
+      - "--docker_only=true"
+      - "--disable_metrics=percpu,sched,tcp,udp,disk,diskIO,accelerator,hugetlb,referenced_memory,cpu_topology,resctrl"
+    volumes:
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+      - /sys:/sys:ro
+      - /var/run:/var/run:ro
+      - /:/rootfs:ro
+      - /sys/fs/cgroup:/cgroup:ro
+      - /etc/machine-id:/etc/machine-id:ro
+      - /etc/localtime:/etc/localtime:ro
+    deploy:
+      mode: global
+      update_config:
+        order: stop-first
+      resources:
+        reservations:
+          memory: 80M
+    healthcheck:
+      test: wget --quiet --tries=1 --spider http://localhost:8080/healthz || exit 1
+      interval: 15s
+      timeout: 15s
+      retries: 5
+      start_period: 30s
+    networks:
+      - backend
+    restart: unless-stopped
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    hostname: node_exporter
+    #    ports:
+    #      - "9100:9100"
+    command:
+      - '--path.rootfs=/host'
+    pid: host
+    restart: unless-stopped
+    networks:
+      - backend
+    volumes:
+      - '/:/host:ro,rslave'
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    hostname: prometheus
+    #    ports:
+    #      - "9099:9090"
+    volumes:
+      - /etc/prometheus:/etc/prometheus
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+    networks:
+      - backend
+    command:
+      - "--storage.tsdb.retention.size=80GB"
+      - "--config.file=/etc/prometheus/prometheus.yml"
+  blackbox:
+    image: prom/blackbox-exporter:master
+    restart: unless-stopped
+    volumes:
+      - ./blackbox/blackbox.yml:/etc/blackbox/blackbox.yml
+    command: --config.file=/etc/blackbox/blackbox.yml
+    user: 1000:1000

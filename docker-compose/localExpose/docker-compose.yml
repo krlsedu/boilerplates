@@ -1,0 +1,23 @@
+version: '3'
+
+networks:
+  backend:
+    external: true
+
+services:
+  localxpose:
+    container_name: localxpose
+    hostname: localxpose
+    image: localxpose/localxpose:latest
+    restart: always
+    environment:
+      ACCESS_TOKEN: H3a99kVSyhH69fAIqHgOYvojeFhMkexfnu4H1bdK
+    networks:
+      - backend
+    command:
+      - tunnel
+      - config
+      - -f
+      - /config.yaml
+    volumes:
+      - D:\Fontes\boilerplates\docker-compose\localExpose\config.yaml:/config.yaml

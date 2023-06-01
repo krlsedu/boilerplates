@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  pubsubemulator:
+    container_name: firestoreemulator
+    hostname: firestoreemulator
+    image: firestoreemulator
+    ports:
+      - "8105:8105"

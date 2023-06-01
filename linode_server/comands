@@ -1,2 +1,3 @@
 docker network create backend
 docker network create frontend
+docker network create --driver overlay --attachable swarm_network

@@ -1,0 +1,5 @@
+metrics:
+  type: http
+  region: us
+  to: host.docker.internal:10445
+  reserved_domain: windata.csctracker.com

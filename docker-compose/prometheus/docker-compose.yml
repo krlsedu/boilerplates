@@ -1,58 +1,78 @@
-version: '3'
+version: '3.8'
 
 volumes:
   prometheus-data:
     driver: local
 
+networks:
+  backend:
+    external: true
+
 services:
   cadvisor:
     image: spcodes/cadvisor
     container_name: cadvisor
+    hostname: cadvisor
     privileged: true
     expose:
       - 8080
-    ports:
-      - "8180:8080"
+    #    ports:
+    #      - "8180:8080"
+    command:
+      - "--housekeeping_interval=30s"
+      - "--docker_only=true"
+      - "--disable_metrics=percpu,sched,tcp,udp,disk,diskIO,accelerator,hugetlb,referenced_memory,cpu_topology,resctrl"
     volumes:
-      - /cgroup:/cgroup:ro
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
-    devices:
-      - /dev/kmsg
+      - /sys:/sys:ro
+      - /var/run:/var/run:ro
+      - /:/rootfs:ro
+      - /sys/fs/cgroup:/cgroup:ro
+      - /etc/machine-id:/etc/machine-id:ro
+      - /etc/localtime:/etc/localtime:ro
+    deploy:
+      mode: global
+      update_config:
+        order: stop-first
+      resources:
+        reservations:
+          memory: 80M
+    healthcheck:
+      test: wget --quiet --tries=1 --spider http://localhost:8080/healthz || exit 1
+      interval: 15s
+      timeout: 15s
+      retries: 5
+      start_period: 30s
+    networks:
+      - backend
     restart: unless-stopped
   node_exporter:
     image: quay.io/prometheus/node-exporter:latest
     container_name: node_exporter
-    ports:
-      - "9100:9100"
+    hostname: node_exporter
+    #    ports:
+    #      - "9100:9100"
     command:
       - '--path.rootfs=/host'
     pid: host
     restart: unless-stopped
+    networks:
+      - backend
     volumes:
       - '/:/host:ro,rslave'
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
-    ports:
-      - "9099:9090"
+    hostname: prometheus
+    #    ports:
+    #      - "9099:9090"
     volumes:
       - /etc/prometheus:/etc/prometheus
       - prometheus-data:/prometheus
     restart: unless-stopped
+    networks:
+      - backend
     command:
       - "--storage.tsdb.retention.size=80GB"
       - "--config.file=/etc/prometheus/prometheus.yml"
-  grafana:
-    image: grafana/grafana:main-ubuntu
-    container_name: grafana
-    ports:
-      - "3020:3000"
-    environment:
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-    volumes:
-      - grafana-data:/var/lib/grafana
-    restart: unless-stopped

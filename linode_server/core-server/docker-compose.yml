@@ -54,6 +54,8 @@ services:
     hostname: postgres
     image: postgres:alpine
     restart: always
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -66,12 +68,12 @@ services:
     container_name: pgadmin
     hostname: pgadmin
     image: dpage/pgadmin4:snapshot
+    ports:
+      - "9777:82"
     environment:
       PGADMIN_DEFAULT_EMAIL: "krlsedu@gmail.com"
       PGADMIN_DEFAULT_PASSWORD: "admin"
       PGADMIN_LISTEN_PORT: 82
-    depends_on:
-      - postgres-db
     networks:
       - backend
 

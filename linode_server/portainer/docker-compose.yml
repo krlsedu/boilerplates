@@ -5,12 +5,15 @@ volumes:
 
 networks:
   backend:
+    external: true
 
 services:
   portainer:
     container_name: portainer
     hostname: portainer
     image: 'portainer/portainer-ce:latest'
+    networks:
+      - backend
     ports:
       - "9000:9000"
       - "8000:8000"
